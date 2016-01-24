@@ -1,3 +1,17 @@
+#' Calculation of the independence-value
+#'
+#' This function calculates the independence-value from a digital elevation model. 
+#'@author Luise Wraase, Jannik G√ºnther, Henning Reinarz und Johannes Schaal <team1@none.com>,  
+#' \cr
+#' \emph{Maintainer:} Luise Wraase, Jannik G√ºnther, Henning Reinarz und Johannes Schaal \email{team1@none.com}
+#'@references \url{http://www.alpenverein.de/chameleon/public/e73377b2-4b18-f439-1392-c5758cd00d88/Panorama-2-2012-Prominente-Berge_19663.pdf} 
+#'
+#' @param fname.control 
+#' @param fname.DEM The path to the digital elevation model
+#'
+#' @return The independence-value 
+#' @export Rpeak
+
 #' Demo Digital Elevation Model DEM
 #'
 #' The example Digital Elevation Model DEM is taken from the Authority of Tirol
@@ -12,7 +26,7 @@
 #'   \item EPSG-Code, 31254
 #'   \item unit, Meter
 #'   \item datum, D_MGI
-#'   \item Copyright:   \url{https://www.tirol.gv.at/data/nutzungsbedingungen/},  \url{Creative Commons Namensnennung 3.0 ÷sterreich Lizenz (CC BY 3.0 AT).}
+#'   \item Copyright:   \url{https://www.tirol.gv.at/data/nutzungsbedingungen/},  \url{Creative Commons Namensnennung 3.0 √ñsterreich Lizenz (CC BY 3.0 AT).}
 #'   }
 #' @source Data source: \url{https://www.tirol.gv.at/data/datenkatalog/geographie-und-planung/digitales-gelaendemodell-tirol/}
 #'         
@@ -109,7 +123,7 @@ NULL
 #'
 #'@references Marburg Open Courseware Advanced GIS: \url{http://moc.environmentalinformatics-marburg.de/doku.php?id=courses:msc:advanced-gis:description}
 #'@references Rauch. C. (2012): Der perfekte Gipfel.  Panorama, 2/2012, S. 112 \url{http://www.alpenverein.de/dav-services/panorama-magazin/dominanz-prominenz-eigenstaendigkeit-eines-berges_aid_11186.html}
-#'@references Leonhard, W. (2012): Eigenst‰ndigkeit von Gipfeln.\url{http://www.thehighrisepages.de/bergtouren/na_orogr.htm}
+#'@references Leonhard, W. (2012): Eigenst√§ndigkeit von Gipfeln.\url{http://www.thehighrisepages.de/bergtouren/na_orogr.htm}
 #'@return Rpeak returns the complete list as a dataframe of all parameters and results and 
 #' generates some output (maps and tables)
 #'
@@ -173,7 +187,7 @@ Rpeak <- function(fname.control, fname.DEM){
   kernel.size <- as.numeric(ini$Params$filterkernelsize) # Size of filter for mode=1; range 3-30, default= 3
   make.peak.mode <- ini$Param$makepeakmode # mode:1=minmax, 2=wood$co
   run.makePeak<- ini$Param$runmakePeak
-  exact.enough <- as.numeric(ini$Params$exactenough) # Annaehrungswert beim Fluten f¸r die Prominenz
+  exact.enough <- as.numeric(ini$Params$exactenough) # Annaehrungswert beim Fluten f√ºr die Prominenz
   epsg.code <- ini$Projection$targetepsg #EPSG Code
   target.proj4 <- ini$Projection$targetproj4 # correct string from the ini file
   latlon.proj4 <- ini$Projection$latlonproj4 # basic latlon wgs84 proj 4 string
@@ -185,8 +199,8 @@ Rpeak <- function(fname.control, fname.DEM){
   } else {
     if (file.exists(peak.list)){
       final.peak.list<-read.table(peak.list, header = TRUE, sep = " ",dec='.')
-      # Da nur in makePeak das Hˆhenmodell eine Projektion zugewiesen bekommt, soll an dieser Stelle extra nochmal eine Projektion zugewiesen werden
-      # Falls man makePeak ¸berspringt.
+      # Da nur in makePeak das H√∂henmodell eine Projektion zugewiesen bekommt, soll an dieser Stelle extra nochmal eine Projektion zugewiesen werden
+      # Falls man makePeak √ºberspringt.
       projectDEM(dem.in, epsg.code)
     } else{
       stop('There is no valid peaklist')
