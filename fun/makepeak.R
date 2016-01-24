@@ -1,4 +1,4 @@
-makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,int=TRUE){
+makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, int=TRUE){
   #  Wrapper function that generates a raw list of local maxima and
   #  corresponding altitudes that will be assumed as peaks. Available are:
   #  (1) minmax: extracts local maxima altitudes from an arbitrary Digital
@@ -26,12 +26,12 @@ makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,int=TRU
     # command line commands from R insteas of using the shell
     
     of='-of SAGA'
-    fname='mp_dem.sdat'
+    fname1='mp_dem.sdat'
     
     # (GDAL) gdalwarp is used to (1) convert the data format (2) assign the
     # projection information to the data.
     # generate the gdalwarp command string
-    gdalwarp(dem.in, fname, s_srs=c(epsg.code), of=c('SAGA'), overwrite=T )
+    gdalwarp(dem.in, fname1, s_srs=c(epsg), of=c('SAGA'), overwrite=T )
     
     # (SAGA) generate the filter command string
     print('Filtering the DEM - may take a while...')
@@ -48,7 +48,7 @@ makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,int=TRU
     
     ### generate peaklist from make.peak.mode=1
     # (R) read the converted max data was stored in "run_peak_list.txt" into a data frame
-    df=read.csv("run_peak_list.txt",  header = FALSE, sep = "\t",dec='.')
+    df=read.table("run_peak_list.txt",  header = FALSE, sep = "\t",dec='.')
     
     # Bereinige "run_peak_list.txt" von den NoData-Werten
     # Wandle die Spalte der Z-Werte in numerische Werte um, um mit ihnen rechnen zu können

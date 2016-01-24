@@ -25,7 +25,7 @@
 
 iniParse <- function(fname)
 {
-  ini.file <- file("C:/Users/Jannik/Dropbox/Marburg/PackageProject/perfectPeak/R/control.ini")
+  ini.file <- file(fname)
   Lines  <- readLines(ini.file)
   close(ini.file)
   
