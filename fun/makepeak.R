@@ -12,7 +12,6 @@
 #' kernel.size Size of filter kernel in pixel, default=3. 
 #' @return List of with the the x-coordiantes, y-coordinates and altitutes of the found peaks
 #' @export makePeak
-
 makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, int=TRUE){
   #  Wrapper function that generates a raw list of local maxima and
   #  corresponding altitudes that will be assumed as peaks. Available are:
@@ -33,7 +32,7 @@ makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, 
   # Returns:
   #   the peak list as data frame
   dem.in <- "C:/geography/advancedgis/perfectpeak/lz_10m_float_clip.asc"
-  epsg <- "EPSG:31255"
+  epsg <- 'EPSG:31255'
   str(epsg)
   # (1=SAGA) (2=GRASS, 3=gdal both not not implemented)
   if (make.peak.mode==1){
@@ -44,6 +43,10 @@ makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, 
     
     of='-of SAGA'
     fname1='mp_dem.sdat'
+    
+    gdal_setInstallation(search_path = "C:/OSGeo4W64/bin")
+    valid.install<-!is.null(getOption("gdalUtils_gdalPath"))
+    if (!valid.install){stop('no valid GDAL/OGR found')} else{print('gdalUtils status is ok')}
     
     # (GDAL) gdalwarp is used to (1) convert the data format (2) assign the
     # projection information to the data.
@@ -68,9 +71,9 @@ makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, 
     df=read.table("run_peak_list.txt",  header = FALSE, sep = "\t",dec='.')
     
     # Bereinige "run_peak_list.txt" von den NoData-Werten
-    # Wandle die Spalte der Z-Werte in numerische Werte um, um mit ihnen rechnen zu kÃ¶nnen
+    # Wandle die Spalte der Z-Werte in numerische Werte um, um mit ihnen rechnen zu können
     df$V3 <- as.numeric(as.character(df$V3))
-    # speichere in der Variable df alle Z-Werte, die grÃ¶ÃŸer/gleich 0 und kleiner/gleich 8848 sind
+    # speichere in der Variable df alle Z-Werte, die größer/gleich 0 und kleiner/gleich 8848 sind
     # Das ist notwendig um die -99999 Werte und die 700000000 Werte (also die NoDATA-Werte) zu eliminieren
     df <- df[df$V3 >= 0 & df$V3 <= 8848,]
     # Wandle die Spalte mit den X und Y Werte ebenfalls in numerische Werte um
