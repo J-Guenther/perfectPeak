@@ -1,3 +1,18 @@
+#' Generation of a Peaklist
+#'
+#' This function generates a raw list of local maxima and corresponding altitudes that 
+#' will be assumed as peaks.
+#'@author Luise Wraase, Jannik GÃ¼nther, Henning Reinarz und Johannes Schaal <team1@none.com>,  
+#' \cr
+#' \emph{Maintainer:} Luise Wraase, Jannik GÃ¼nther, Henning Reinarz und Johannes Schaal \email{team1@none.com}
+#'   
+#' @param dem.in A digital elevation model from which peaks will be extracted
+#' peak.list Name of the  the ASCII file containing all peak parameters
+#' mode 1=minmax,2=wood,3=harry
+#' kernel.size Size of filter kernel in pixel, default=3. 
+#' @return List of with the the x-coordiantes, y-coordinates and altitutes of the found peaks
+#' @export makePeak
+
 makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, int=TRUE){
   #  Wrapper function that generates a raw list of local maxima and
   #  corresponding altitudes that will be assumed as peaks. Available are:
@@ -51,9 +66,9 @@ makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, 
     df=read.table("run_peak_list.txt",  header = FALSE, sep = "\t",dec='.')
     
     # Bereinige "run_peak_list.txt" von den NoData-Werten
-    # Wandle die Spalte der Z-Werte in numerische Werte um, um mit ihnen rechnen zu können
+    # Wandle die Spalte der Z-Werte in numerische Werte um, um mit ihnen rechnen zu kÃ¶nnen
     df$V3 <- as.numeric(as.character(df$V3))
-    # speichere in der Variable df alle Z-Werte, die größer/gleich 0 und kleiner/gleich 8848 sind
+    # speichere in der Variable df alle Z-Werte, die grÃ¶ÃŸer/gleich 0 und kleiner/gleich 8848 sind
     # Das ist notwendig um die -99999 Werte und die 700000000 Werte (also die NoDATA-Werte) zu eliminieren
     df <- df[df$V3 >= 0 & df$V3 <= 8848,]
     # Wandle die Spalte mit den X und Y Werte ebenfalls in numerische Werte um
