@@ -88,140 +88,140 @@ Rpeak <- function(fname.control, fname.DEM){
   
 }
   
-  ###   --- setup section ---
-  
-  # (R) cleanup global environment
-  rm(list = ls())
-  start.time <- proc.time()
-  
-  #(R) if necessary install raster and rgdal
-  # if (!require(RSAGA)){install.packages('RSAGA')}
-  # if (!require(rgdal)){install.packages('rgdal')}
-  # if (!require(raster)){install.packages('raster')}
-  # if (!require(gdalUtils)){install.packages('gdalUtils')}
-  # if (!require(gdalUtils)){install.packages('rgdal')}
-  # if (!require(gdalUtils)){install.packages('sp')}
-  # if (!require(gdalUtils)){install.packages('maptools')}
-  
-  # (R) load libs
-  library(RSAGA)
-  library(gdalUtils)
-  library(raster)
-  library(sp)
-  library(rgdal)
-  library(maptools)
-  
-  #Pathdummys for copy-paste
-  #Jannik Laptop:
-  #C:/OSGeo4W64/
-  #C:/geography/advancedgis/perfectpeak/
-  #C:/Dropbox/Marburg/agis/scripts/
-  #
-  #Jannik PC:
-  #D:/Programme/OSGeo4W64/
-  #D:/Geographie/Advanced_GIS/Projekt_perfektpeak/
-  #D:/Dropbox/Dropbox/Marburg/agis/Scripts/
-  
-  ## (gdalUtils) check for a valid GDAL binary installation on your system
-  # Sollte kein GDAL gefunden werden, ist es nicht korrekt installiert, oder der search_path muss angepasst werden
-  gdal_setInstallation(search_path = "C:/OSGeo4W64/bin")
-  valid.install<-!is.null(getOption("gdalUtils_gdalPath"))
-  if (!valid.install){stop('no valid GDAL/OGR found')} else{print('gdalUtils status is ok')}
-  
-  ## (R) define some parameters
-  root.dir <- "C:/geography/advancedgis/perfectpeak/"   # root folder
-  working.dir <- "tmp"         # working folder
-  script.dir <- "C:/Users/Jannik/Dropbox/Marburg/agis/scripts/" # Script Folder
-  
-  peak.list <- "peaklist.txt"         # outputname of peaklist
-  dem.in <- "lz_10m_float_clip.asc"        # input DEM
-  if (dem.in==''){dem.in<-file.choose()}
-  
-  run.makePeak<-T               # if TRUE run makePeak
-  kernel.size<-25                   # range 3-30 bigger numbers=smoother terrain and slower!
-  make.peak.mode<-1                 # mode:1=minmax,2=wood,3=harry (2,3 not implemented)
-  epsg.code<-'EPSG:31255'           # EPSG Code for input ASC file
-  exact.enough<-5                   # vertical exactness of flooding in meter
-  
-  
-  
-  # (R) set working directory
-  setwd(file.path(root.dir, working.dir))
-  workingpath <- file.path(root.dir, working.dir)
-  
-  
-  # Definiere die Umgebungen für RSAGA und die Pfade für die OSGeo4W shell und die saga_cmd für Windows oder Linux
-  if(Sys.info()["sysname"] == "Windows"){
-    # (RSAGA) define SAGA environment Windows
-    myenv=rsaga.env(check.libpath=FALSE,
-                    check.SAGA=FALSE,
-                    workspace=file.path(root.dir, working.dir),
-                    os.default.path="C:/OSGeo4W64/apps/saga",
-                    modules="C:/OSGeo4W64/apps/saga/modules")
-    # Definiere Pfade zu den Shells
-    osgeo_bat <- "C:/OSGeo4W64/OSGeo4W.bat" # Pfad zur OSGeo4W.bat
-    saga_cmd <- "C:/OSGeo4W64/apps/saga/saga_cmd.exe" # Pfad zur saga_cmd.exe
-    saga_cmd_new <- "C:/OSGeo4W64/apps/saga-new/saga_cmd.exe" #Pfad zur saga_cmd.exe einer neuen SAGA Version
-    #INFO: Getestet wurde das Script mit SAGA 2.1.2. Bis auf einen Befehl lief das Script einwandfrei
-    #Der Befehl zur erstellung des Proximity-Grid in der Funktion calculateDominance2 funkttionierte nur in SAGA 2.2.2, daher 
-    #existiert hier ein extra Pfad zur cmd der neuen Version.
-    
-  }else if (Sys.info()["sysname"] == "Linux"){ # (RSAGA) define SAGA environment Linux
-    myenv=rsaga.env(check.libpath=FALSE,
-                    check.SAGA=FALSE,
-                    workspace=file.path(root.dir, working.dir),
-                    os.default.path="/home/creu/SAGA-2.1.0-fixed/initial/bin",
-                    modules="/home/creu/SAGA-2.1.0-fixed/initial/lib/saga")
-    
-    # Definiere Pfade zu den Shells
-    osgeo_bat <- "" 
-    saga_cmd <- "saga_cmd"
-    saga_cmd_new <- "saga_cmd"
-  }  
-  
-  # Laden der einzelnen Funktionen, welche in externen R Scripten ausgelagert sind.
-  if(!exists("makepeak", mode="function")){source(paste0(script.dir,"makepeak.R"))}
-  if(!exists("projectDEM", mode="function")){source(paste0(script.dir,"projectDEM.R"))}
-  if(!exists("calculateDominance", mode="function")){source(paste0(script.dir,"calculateDominance.R"))}
-  if(!exists("calculateProminence", mode="function")){source(paste0(script.dir,"calculateProminence.R"))}
-  if(!exists("calculateEvalue", mode="function")){source(paste0(script.dir,"calculateEvalue.R"))}
-  
-  # (R) delete all runtime files with filenames starting with 'run_'
-  file.remove(list.files(file.path(root.dir, working.dir), pattern =('run'), full.names = TRUE, ignore.case = TRUE))
-  
-  ###   --- end setup section ---
-  
-  
-  
-  ###   --- start main ---
-  
-  # (R) call MakePeak if necessary
-  if (run.makePeak) {
-    final.peak.list<-makePeak(dem.in, peak.list,make.peak.mode,epsg.code, kernel.size)
-  } else {
-    if (file.exists(peak.list)){
-      final.peak.list<-read.table(peak.list, header = TRUE, sep = " ",dec='.')
-      # Da nur in makePeak das Höhenmodell eine Projektion zugewiesen bekommt, soll an dieser Stelle extra nochmal eine Projektion zugewiesen werden
-      # Falls man makePeak überspringt.
-      projectDEM(dem.in, epsg.code)
-    } else{
-      stop('There is no valid peaklist')
-    }
-  }
-  # (R) calculate dominance and prominence
-  #for (i in 1: nrow(final.peak.list)){
-  for (i in 2:6){
-    # call calculate functions and put retrieved value into the dataframe field.
-    final.peak.list[i,4]<-calculateDominance(final.peak.list[i,1], final.peak.list[i,2],final.peak.list[i,3])
-    final.peak.list[i,5]<-calculateProminence(final.peak.list,final.peak.list[i,1], final.peak.list[i,2],final.peak.list[i,3],exact.enough, epsg.code)
-    final.peak.list[i,7]<-calculateEValue(final.peak.list[i,3], final.peak.list[i,4],final.peak.list[i,5])
-  }
-  write.table(final.peak.list,'peaklist.txt',row.names=F)
-  
-  # (R) delete all runtime files with filenames starting with run_
-  file.remove(list.files(file.path(root.dir, working.dir), pattern =('mp_'), full.names = TRUE, ignore.case = TRUE))
-  file.remove(list.files(file.path(root.dir, working.dir), pattern =('run'), full.names = TRUE, ignore.case = TRUE))
-  
-  proc.time()-start.time
-}
-
+#   ###   --- setup section ---
+#   
+#   # (R) cleanup global environment
+#   rm(list = ls())
+#   start.time <- proc.time()
+#   
+#   #(R) if necessary install raster and rgdal
+#   # if (!require(RSAGA)){install.packages('RSAGA')}
+#   # if (!require(rgdal)){install.packages('rgdal')}
+#   # if (!require(raster)){install.packages('raster')}
+#   # if (!require(gdalUtils)){install.packages('gdalUtils')}
+#   # if (!require(gdalUtils)){install.packages('rgdal')}
+#   # if (!require(gdalUtils)){install.packages('sp')}
+#   # if (!require(gdalUtils)){install.packages('maptools')}
+#   
+#   # (R) load libs
+#   library(RSAGA)
+#   library(gdalUtils)
+#   library(raster)
+#   library(sp)
+#   library(rgdal)
+#   library(maptools)
+#   
+#   #Pathdummys for copy-paste
+#   #Jannik Laptop:
+#   #C:/OSGeo4W64/
+#   #C:/geography/advancedgis/perfectpeak/
+#   #C:/Dropbox/Marburg/agis/scripts/
+#   #
+#   #Jannik PC:
+#   #D:/Programme/OSGeo4W64/
+#   #D:/Geographie/Advanced_GIS/Projekt_perfektpeak/
+#   #D:/Dropbox/Dropbox/Marburg/agis/Scripts/
+#   
+#   ## (gdalUtils) check for a valid GDAL binary installation on your system
+#   # Sollte kein GDAL gefunden werden, ist es nicht korrekt installiert, oder der search_path muss angepasst werden
+#   gdal_setInstallation(search_path = "C:/OSGeo4W64/bin")
+#   valid.install<-!is.null(getOption("gdalUtils_gdalPath"))
+#   if (!valid.install){stop('no valid GDAL/OGR found')} else{print('gdalUtils status is ok')}
+#   
+#   ## (R) define some parameters
+#   root.dir <- "C:/geography/advancedgis/perfectpeak/"   # root folder
+#   working.dir <- "tmp"         # working folder
+#   script.dir <- "C:/Users/Jannik/Dropbox/Marburg/agis/scripts/" # Script Folder
+#   
+#   peak.list <- "peaklist.txt"         # outputname of peaklist
+#   dem.in <- "lz_10m_float_clip.asc"        # input DEM
+#   if (dem.in==''){dem.in<-file.choose()}
+#   
+#   run.makePeak<-T               # if TRUE run makePeak
+#   kernel.size<-25                   # range 3-30 bigger numbers=smoother terrain and slower!
+#   make.peak.mode<-1                 # mode:1=minmax,2=wood,3=harry (2,3 not implemented)
+#   epsg.code<-'EPSG:31255'           # EPSG Code for input ASC file
+#   exact.enough<-5                   # vertical exactness of flooding in meter
+#   
+#   
+#   
+#   # (R) set working directory
+#   setwd(file.path(root.dir, working.dir))
+#   workingpath <- file.path(root.dir, working.dir)
+#   
+#   
+#   # Definiere die Umgebungen für RSAGA und die Pfade für die OSGeo4W shell und die saga_cmd für Windows oder Linux
+#   if(Sys.info()["sysname"] == "Windows"){
+#     # (RSAGA) define SAGA environment Windows
+#     myenv=rsaga.env(check.libpath=FALSE,
+#                     check.SAGA=FALSE,
+#                     workspace=file.path(root.dir, working.dir),
+#                     os.default.path="C:/OSGeo4W64/apps/saga",
+#                     modules="C:/OSGeo4W64/apps/saga/modules")
+#     # Definiere Pfade zu den Shells
+#     osgeo_bat <- "C:/OSGeo4W64/OSGeo4W.bat" # Pfad zur OSGeo4W.bat
+#     saga_cmd <- "C:/OSGeo4W64/apps/saga/saga_cmd.exe" # Pfad zur saga_cmd.exe
+#     saga_cmd_new <- "C:/OSGeo4W64/apps/saga-new/saga_cmd.exe" #Pfad zur saga_cmd.exe einer neuen SAGA Version
+#     #INFO: Getestet wurde das Script mit SAGA 2.1.2. Bis auf einen Befehl lief das Script einwandfrei
+#     #Der Befehl zur erstellung des Proximity-Grid in der Funktion calculateDominance2 funkttionierte nur in SAGA 2.2.2, daher 
+#     #existiert hier ein extra Pfad zur cmd der neuen Version.
+#     
+#   }else if (Sys.info()["sysname"] == "Linux"){ # (RSAGA) define SAGA environment Linux
+#     myenv=rsaga.env(check.libpath=FALSE,
+#                     check.SAGA=FALSE,
+#                     workspace=file.path(root.dir, working.dir),
+#                     os.default.path="/home/creu/SAGA-2.1.0-fixed/initial/bin",
+#                     modules="/home/creu/SAGA-2.1.0-fixed/initial/lib/saga")
+#     
+#     # Definiere Pfade zu den Shells
+#     osgeo_bat <- "" 
+#     saga_cmd <- "saga_cmd"
+#     saga_cmd_new <- "saga_cmd"
+#   }  
+#   
+#   # Laden der einzelnen Funktionen, welche in externen R Scripten ausgelagert sind.
+#   if(!exists("makepeak", mode="function")){source(paste0(script.dir,"makepeak.R"))}
+#   if(!exists("projectDEM", mode="function")){source(paste0(script.dir,"projectDEM.R"))}
+#   if(!exists("calculateDominance", mode="function")){source(paste0(script.dir,"calculateDominance.R"))}
+#   if(!exists("calculateProminence", mode="function")){source(paste0(script.dir,"calculateProminence.R"))}
+#   if(!exists("calculateEvalue", mode="function")){source(paste0(script.dir,"calculateEvalue.R"))}
+#   
+#   # (R) delete all runtime files with filenames starting with 'run_'
+#   file.remove(list.files(file.path(root.dir, working.dir), pattern =('run'), full.names = TRUE, ignore.case = TRUE))
+#   
+#   ###   --- end setup section ---
+#   
+#   
+#   
+#   ###   --- start main ---
+#   
+#   # (R) call MakePeak if necessary
+#   if (run.makePeak) {
+#     final.peak.list<-makePeak(dem.in, peak.list,make.peak.mode,epsg.code, kernel.size)
+#   } else {
+#     if (file.exists(peak.list)){
+#       final.peak.list<-read.table(peak.list, header = TRUE, sep = " ",dec='.')
+#       # Da nur in makePeak das Höhenmodell eine Projektion zugewiesen bekommt, soll an dieser Stelle extra nochmal eine Projektion zugewiesen werden
+#       # Falls man makePeak überspringt.
+#       projectDEM(dem.in, epsg.code)
+#     } else{
+#       stop('There is no valid peaklist')
+#     }
+#   }
+#   # (R) calculate dominance and prominence
+#   #for (i in 1: nrow(final.peak.list)){
+#   for (i in 2:6){
+#     # call calculate functions and put retrieved value into the dataframe field.
+#     final.peak.list[i,4]<-calculateDominance(final.peak.list[i,1], final.peak.list[i,2],final.peak.list[i,3])
+#     final.peak.list[i,5]<-calculateProminence(final.peak.list,final.peak.list[i,1], final.peak.list[i,2],final.peak.list[i,3],exact.enough, epsg.code)
+#     final.peak.list[i,7]<-calculateEValue(final.peak.list[i,3], final.peak.list[i,4],final.peak.list[i,5])
+#   }
+#   write.table(final.peak.list,'peaklist.txt',row.names=F)
+#   
+#   # (R) delete all runtime files with filenames starting with run_
+#   file.remove(list.files(file.path(root.dir, working.dir), pattern =('mp_'), full.names = TRUE, ignore.case = TRUE))
+#   file.remove(list.files(file.path(root.dir, working.dir), pattern =('run'), full.names = TRUE, ignore.case = TRUE))
+#   
+#   proc.time()-start.time
+# }
+# 
