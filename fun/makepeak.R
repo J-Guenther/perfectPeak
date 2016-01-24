@@ -17,7 +17,9 @@ makePeak <- function(dem.in, peak.list,make.peak.mode,epsg,kernel.size=3,myenv, 
   #
   # Returns:
   #   the peak list as data frame
-  
+  dem.in <- "C:/geography/advancedgis/perfectpeak/lz_10m_float_clip.asc"
+  epsg <- "EPSG:31255"
+  str(epsg)
   # (1=SAGA) (2=GRASS, 3=gdal both not not implemented)
   if (make.peak.mode==1){
     #-- option 1 SAGA  makes use of the system() function of R to run commands
